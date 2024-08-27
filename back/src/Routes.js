@@ -1,3 +1,55 @@
-export function Routes(app) {
-  app.get('')
+import axios from 'axios'
+
+import { LoginLink } from './functions/auth/genLogin'
+import { AuthDataFetch } from './functions/auth/fetchData'
+import { Salting } from './functions/auth/authRandomSalt'
+
+export async function Routes(app) {
+  app.get('/api/auth/login', (req, res) => {
+    res.redirect(LoginLink())
+  })
+
+  app.get('/api/auth/callback', async (req, res) => {
+    const authCode = req.query.code
+
+    if (
+      typeof authCode === 'string' &&
+      typeof process.env.CLIENT_ID === 'string' &&
+      typeof process.env.CLIENT_SECRET === 'string' &&
+      typeof process.env.REDIRECT_URI === 'string'
+    ) {
+      const resp = await axios.post(
+        'https://discord.com/api/oauth2/token',
+        new URLSearchParams({
+          client_id: process.env.CLIENT_ID,
+          client_secret: process.env.CLIENT_SECRET,
+          grant_type: 'authorization_code',
+          redirect_uri: process.env.REDIRECT_URI,
+          code: authCode,
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      )
+
+      let session =
+        typeof resp.data.access_token === 'string' ? resp.data.access_token : ''
+      let sessionData = await AuthDataFetch(session)
+
+      if (sessionData.id == process.env.OWNER_ID) {
+        let finalSalt = Salting(sessionData.id)
+
+        res.send(finalSalt)
+      } else {
+        res.json({
+          status: 0,
+          message: 'who are you then?',
+        })
+      }
+    } else {
+      res.send('blank body')
+    }
+  })
 }

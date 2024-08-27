@@ -1,0 +1,11 @@
+/.vscode
+/node_modules
+.DS_Store
+
+# ENV
+.env
+
+# Node Lock File (remove for system mismatch)
+yarn.lock
+package-lock.json
+pnpm-lock.yaml

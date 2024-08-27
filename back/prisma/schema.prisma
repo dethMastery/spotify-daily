@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model auth_key {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  authKey     String
+  expiredTime Int // Set as Epoch Time
+
+  @@map("auth-key")
+}
+
+model songs_data {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  songID     String
+  songName   String
+  songArtist String
+  songImage  String
+  songLink   String
+  dateAdd    Int // This is gonna be Epoch Time
+
+  @@map("songs-data")
+}

@@ -3,6 +3,8 @@ import axios from 'axios'
 import { LoginLink } from './functions/auth/genLogin'
 import { AuthDataFetch } from './functions/auth/fetchData'
 import { Salting } from './functions/auth/authRandomSalt'
+import { createAuth } from './functions/db/apis/auth'
+import { catchEvent, pDis } from './functions/db/apis/errorCatch'
 
 export async function Routes(app) {
   app.get('/api/auth/login', (req, res) => {
@@ -40,8 +42,15 @@ export async function Routes(app) {
 
       if (sessionData.id == process.env.OWNER_ID) {
         let finalSalt = Salting(sessionData.id)
+        let expired = new Date().getTime() + 3600000
 
-        res.send(finalSalt)
+        await createAuth(finalSalt, expired)
+          .then(async () => await pDis())
+          .catch(async (e) => await catchEvent(e))
+
+        res.redirect(
+          `${FE_URL}/auth/callback?salt=${finalSalt}&expired=${expired}`
+        )
       } else {
         res.json({
           status: 0,

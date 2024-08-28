@@ -3,9 +3,7 @@ import { pCLI } from '../client'
 export async function createAuth(salt, expired) {
   const search = await pCLI.auth_key.findFirst({
     where: {
-      authKey: {
-        equals: salt,
-      },
+      authKey: salt,
     },
   })
 
@@ -16,7 +14,7 @@ export async function createAuth(salt, expired) {
     create = await pCLI.auth_key.create({
       data: {
         authKey: salt,
-        expired: expired,
+        expiredTime: expired,
       },
     })
   }
@@ -38,14 +36,12 @@ export async function createAuth(salt, expired) {
 export async function checkAuth(salt) {
   const search = await pCLI.auth_key.findFirst({
     where: {
-      authKey: {
-        equals: salt,
-      },
+      authKey: salt,
     },
   })
 
   if (search != undefined) {
-    if (search.expired <= new Date().getTime()) {
+    if (search.expiredTime <= new Date().getTime()) {
       await pCLI.auth_key.delete({
         where: {
           id: search.id,

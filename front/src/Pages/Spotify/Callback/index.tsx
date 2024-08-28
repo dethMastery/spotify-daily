@@ -20,6 +20,10 @@ export const SpotifyCallbackPage = () => {
       );
 
       sessionStorage.setItem("spt_token", tt);
+      sessionStorage.setItem(
+        "spt_expired",
+        String(new Date().getTime() + 3600000)
+      );
     }
 
     navigate("/admin?alert=spt-success");

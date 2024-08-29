@@ -10,8 +10,6 @@ export async function addNewSong(app) {
     const check = checkAuth(auth)
 
     if (check.status != 0) {
-      console.log(body)
-
       const payload = pCLI.songs_data.create({
         data: body,
       })

@@ -11,6 +11,7 @@ import { AdminPage } from "./Pages/Admin";
 import { SpotifyLoginPage } from "./Pages/Spotify/Login";
 import { SpotifyCallbackPage } from "./Pages/Spotify/Callback";
 import { SpotifyLogoutPage } from "./Pages/Spotify/Logout";
+import { Logout } from "./Pages/Logout";
 
 export const Router = () => {
   return (
@@ -18,7 +19,7 @@ export const Router = () => {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/logout" />
+        <Route path="/logout" element={<Logout />} />
         <Route path="/auth/callback" element={<CallbackPage />} />
 
         <Route path="/admin" element={<AdminPage />} />

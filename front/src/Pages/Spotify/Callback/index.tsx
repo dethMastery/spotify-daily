@@ -11,13 +11,8 @@ export const SpotifyCallbackPage = () => {
     let phase = hash != undefined ? String(hash) : "no";
     let tt = sessionStorage.getItem("spt_token");
 
-    if (!tt && phase != "no") {
-      tt = String(
-        phase
-          .split("&")
-          .find((elem: string) => elem.startsWith("access_token"))
-          ?.split("=")[1]
-      );
+    if ((!tt || tt == undefined) && phase != "no") {
+      tt = String(phase.split("&")[0].replace("#access_token=", ""));
 
       sessionStorage.setItem("spt_token", tt);
       sessionStorage.setItem(

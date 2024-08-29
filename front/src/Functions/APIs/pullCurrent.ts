@@ -12,6 +12,5 @@ export function pullLatest(
     .then((resp) => resp.json())
     .then((resp) => {
       setState(resp.payload);
-      console.log(resp.payload);
     });
 }

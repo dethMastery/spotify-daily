@@ -33,7 +33,7 @@ export function changeCurrent(
         }
       });
 
-    fetch(`${import.meta.env.VITE_BE_URI}/api/song/latest`, {
+    fetch(`${import.meta.env.VITE_BE_URI}/api/songs/latest`, {
       method: "GET",
       headers: new Headers({
         "Content-Type": "application/json; charset=UTF-8",

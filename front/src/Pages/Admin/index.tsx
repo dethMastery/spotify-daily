@@ -105,7 +105,7 @@ export const AdminPage = () => {
     }
 
     pullLatest(setCurrent);
-  }, [current]);
+  }, []);
 
   return (
     <div className="w-full min-h-screen">

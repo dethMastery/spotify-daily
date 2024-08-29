@@ -2,14 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import withReactContent from "sweetalert2-react-content";
 import Swal from "sweetalert2";
+
 import { spotifyData } from "../../Interface/SpotifySearch";
+import { SpotifySearch } from "../../Functions/Spotify/search";
+import { dbPayload } from "../../Interface/dbPayload";
+import { changeCurrent } from "../../Functions/APIs/changeCurrent";
+import { pullLatest } from "../../Functions/APIs/pullCurrent";
 
 export const AdminPage = () => {
   const navigate = useNavigate();
 
   const SWAL = withReactContent(Swal);
 
-  const [current, setCurrent] = useState();
+  const [current, setCurrent] = useState<dbPayload>();
   const [searchInput, setSearchInput] = useState<string>();
   const [searchRes, setSearchRes] = useState<spotifyData[]>();
 
@@ -33,43 +38,43 @@ export const AdminPage = () => {
     },
   };
 
-  function SpotifySearch(input: string) {
-    const encode = encodeURI(input);
+  function Search() {
+    SpotifySearch(
+      String(searchInput),
+      String(sessionStorage.getItem("spt_token")),
+      Number(sessionStorage.getItem("spt_expired")),
+      SWAL,
+      setSearchState,
+      setSearchRes
+    );
+  }
 
-    const searchFetchConfig = {
-      url: `https://api.spotify.com/v1/search?q=${encode}&type=track&market=TH&limit=10&offset=0&include_external=audio`,
-      config: {
-        method: "GET",
-        headers: new Headers({
-          "Content-Type": "application/json; charset=UTF-8",
-          Authorization: `Bearer ${sessionStorage.getItem("spt_token")}`,
-        }),
-      },
+  function SetCurrentSong(i: number) {
+    let resp: spotifyData = searchRes[i];
+    let artist: string = "";
+
+    if (resp.artists.length > 1) {
+      for (let i = 0; i < resp.artists.length; i++) {
+        if (i == resp.artists.length - 1) {
+          artist += `${resp.artists[i].name}`;
+        } else {
+          artist += `${resp.artists[i].name}, `;
+        }
+      }
+    } else {
+      artist = resp.artists[0].name;
+    }
+
+    let fetchPayload: dbPayload = {
+      songID: resp.id,
+      songName: resp.name,
+      songArtist: artist,
+      songImage: resp.album.images[0].url,
+      songLink: resp.external_urls.spotify,
+      dateAdd: Number(new Date().getTime()),
     };
 
-    if (new Date().getTime() >= Number(sessionStorage.getItem("spt_expired"))) {
-      SWAL.fire({
-        icon: "error",
-        title: "Oh no!",
-        text: "Spotify Session Expired.",
-      });
-      setSearchState(false);
-    } else {
-      if (sessionStorage.getItem("spt_token") != undefined) {
-        fetch(searchFetchConfig.url, searchFetchConfig.config)
-          .then((resp) => resp.json())
-          .then((resp) => {
-            setSearchRes(resp.tracks.items);
-            console.log(resp.tracks.items);
-          });
-      } else {
-        SWAL.fire({
-          icon: "error",
-          title: "Oh no!",
-          text: "Spotify Token Error.",
-        });
-      }
-    }
+    changeCurrent(fetchPayload, sessionStorage, setCurrent, SWAL);
   }
 
   useEffect(() => {
@@ -98,7 +103,9 @@ export const AdminPage = () => {
         setSearchState(true);
       }
     }
-  }, []);
+
+    pullLatest(setCurrent);
+  }, [current]);
 
   return (
     <div className="w-full min-h-screen">
@@ -115,8 +122,25 @@ export const AdminPage = () => {
       </div>
 
       <div className="w-full h-screen flex flex-col justify-center items-center gap-4 overflow-y-auto">
-        <div className="bg-whitesmoke text-jet p-4 rounded-xl w-[80%]">
+        <div className="bg-whitesmoke text-jet p-4 rounded-xl w-[80%] max-h-[25vh]">
           <h1 className="text-2xl font-semibold mb-4">Current Song :</h1>
+          <div className="w-[80%] h-[10rem] flex flex-row rounded-xl mx-auto bg-jet">
+            <div
+              className="w-[10rem] h-[10rem] rounded-l-xl !bg-cover !bg-center !bg-no-repeat"
+              style={{ background: `url(${current?.songImage})` }}
+            ></div>
+            <div className="text-whitesmoke p-4">
+              <h1 className="text-2xl">{current?.songName}</h1>
+              <h2 className="text-xl opacity-75">{current?.songArtist}</h2>
+              <a
+                href={current?.songLink}
+                target="_blank"
+                className="bg-[#1db954] text-whitesmoke px-2 py-4 mt-2 block text-center rounded-xl hover:opacity-80 hover:scale-90"
+              >
+                <i className="fa-brands fa-spotify"></i> Listen On Spotify
+              </a>
+            </div>
+          </div>
         </div>
 
         <div
@@ -142,7 +166,13 @@ export const AdminPage = () => {
           <h1 className="text-2xl font-semibold mb-4 text-center">
             Wanna add a new song?
           </h1>
-          <div className="w-full flex flex-row justify-start">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              Search();
+            }}
+            className="w-full flex flex-row justify-start"
+          >
             <input
               onChange={(e) => setSearchInput(e.target.value)}
               type="text"
@@ -151,14 +181,11 @@ export const AdminPage = () => {
             />
             <button
               type="submit"
-              onClick={() => {
-                SpotifySearch(String(searchInput));
-              }}
               className="bg-living-coral text-whitesmoke py-2 px-4 rounded-r-lg hover:opacity-80"
             >
               Search
             </button>
-          </div>
+          </form>
         </div>
 
         <div
@@ -172,7 +199,7 @@ export const AdminPage = () => {
             id="search-container"
             className="flex flex-col justify-center items-center gap-4"
           >
-            {searchRes?.map((resp) => {
+            {searchRes?.map((resp, i) => {
               return (
                 <div
                   className="w-[80%] border-solid border-2 border-jet rounded-xl flex flex-row"
@@ -182,13 +209,29 @@ export const AdminPage = () => {
                     className="w-[10rem] h-[10rem] rounded-l-xl !bg-no-repeat !bg-cover !bg-center"
                     style={{ background: `url(${resp.album.images[0].url})` }}
                   ></div>
-                  <div className="px-4 py-2">
-                    <h1 className="text-xl">{resp.name}</h1>
-                    <h1 className="text-lg">
+                  <div className="px-4 py-2 w-auto">
+                    <h1 className="text-xl">
+                      <a
+                        href={resp.external_urls.spotify}
+                        target="_blank"
+                        className="hover:opacity-80 underline"
+                      >
+                        {resp.name}
+                      </a>
+                    </h1>
+                    <h2 className="text-lg">
                       {resp.artists.map((artists) => {
                         return <span className="pr-2">{artists.name}</span>;
                       })}
-                    </h1>
+                    </h2>
+                    <button
+                      className="bg-living-coral p-4 my-2 text-whitesmoke rounded-xl"
+                      onClick={() => {
+                        SetCurrentSong(i);
+                      }}
+                    >
+                      Set as current song!
+                    </button>
                   </div>
                 </div>
               );

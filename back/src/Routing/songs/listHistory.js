@@ -8,10 +8,20 @@ export async function songHistory(app) {
       },
     })
 
+    let returnData = []
+
+    if (returnData.length < data.length) {
+      for (let i = 0; i < 5; i++) {
+        returnData.push(data)
+      }
+    } else {
+      returnData = data
+    }
+
     res.send({
       status: 1,
       message: 'u got it bro!',
-      payload: data,
+      payload: returnData,
     })
   })
 }
